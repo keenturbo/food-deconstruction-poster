@@ -137,7 +137,7 @@
       </div>
 
       <div class="result-panel">
-        <div class="result-title"><span class="dot"></span><span>生成结果</span><span class="state" id="result-state"><span class="dotping"></span>未生成</span></div>
+        <div class="result-title"><span>生成结果</span><span class="dot"></span><span class="dotping"></span><span class="state" id="result-state">未生成</span></div>
         <div class="result">
           <img id="result-image" class="hidden" alt="生成的美食解构海报" />
           <div class="actions hidden" id="result-actions">
@@ -162,7 +162,7 @@
 
     async function generatePoster(foodName) {
       statusText.textContent = '正在解构美食...';
-      resultState.childNodes[1].textContent = '生成中...';
+      resultState.textContent = '生成中...';
       submitBtn.disabled = true;
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
@@ -181,10 +181,10 @@
         resultImg.classList.remove('hidden');
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
-        resultState.childNodes[1].textContent = '生成完成';
+        resultState.textContent = '生成完成';
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
-        resultState.childNodes[1].textContent = '生成失败';
+        resultState.textContent = '生成失败';
       } finally {
         submitBtn.disabled = false;
       }
