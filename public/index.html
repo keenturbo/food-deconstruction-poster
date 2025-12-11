@@ -134,6 +134,50 @@
     .result-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
     .result-title { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.2px; }
     .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+
+    .counter { font-size: 12px; color: var(--muted); }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 18px;
+    }
+    .modal {
+      background: #0b0c12;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 420px;
+      width: 100%;
+      color: var(--text);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .modal h3 { margin: 0 0 8px; font-size: 20px; }
+    .modal p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-secondary {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+    }
+    .qr {
+      width: 140px;
+      height: 140px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0f0f12;
+      object-fit: contain;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +198,7 @@
             <input id="food-input" name="food_name" type="text" placeholder="例：红烧牛肉面 / Peking Duck" required />
           </div>
           <button class="primary" type="submit" id="submit-btn">生成分层海报</button>
+          <div class="counter" id="limit-counter">今日剩余：3/3</div>
           <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待输入...</span></div>
         </form>
       </div>
@@ -174,6 +219,23 @@
     </div>
   </div>
 
+  <div id="limit-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>今日免费额度已用完</h3>
+      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持。</p>
+      <div class="modal-actions">
+        <a class="btn-secondary" href="https://github.com/keenturbo/food-deconstruction-poster" target="_blank" rel="noreferrer">GitHub 免费部署</a>
+        <a class="btn-secondary" href="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" target="_blank" rel="noreferrer">赞赏码</a>
+      </div>
+      <div style="margin-top:12px; display:flex; justify-content:center;">
+        <img class="qr" src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" alt="赞赏码" />
+      </div>
+      <div style="margin-top:14px; text-align:right;">
+        <button class="ghost-btn" type="button" onclick="closeLimitModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const form = document.getElementById('generate-form');
     const foodInput = document.getElementById('food-input');
@@ -184,6 +246,10 @@
     const resultState = document.getElementById('result-state');
     const retryBtn = document.getElementById('retry-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const limitCounter = document.getElementById('limit-counter');
+    const limitModal = document.getElementById('limit-modal');
+
+    const MAX_DAILY_LIMIT = 3;
 
     const sampleImages = [
       'https://food.snippet.pp.ua/IMG_5076.jpeg',
@@ -197,6 +263,36 @@
     ];
     const pick = sampleImages[Math.floor(Math.random() * sampleImages.length)];
     document.documentElement.style.setProperty('--sample', `url('${pick}')`);
+
+    function getDailyUsage() {
+      const today = new Date().toISOString().split('T')[0];
+      const storedDate = localStorage.getItem('last_usage_date');
+      if (storedDate !== today) {
+        localStorage.setItem('last_usage_date', today);
+        localStorage.setItem('daily_count', '0');
+        return 0;
+      }
+      return parseInt(localStorage.getItem('daily_count') || '0', 10);
+    }
+
+    function incrementUsage() {
+      const count = getDailyUsage();
+      localStorage.setItem('daily_count', String(count + 1));
+      updateCounterUI();
+    }
+
+    function updateCounterUI() {
+      const remaining = Math.max(0, MAX_DAILY_LIMIT - getDailyUsage());
+      limitCounter.textContent = `今日剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+    }
+
+    function showLimitModal() {
+      limitModal.classList.remove('hidden');
+    }
+
+    function closeLimitModal() {
+      limitModal.classList.add('hidden');
+    }
 
     async function generatePoster(foodName) {
       statusText.textContent = '正在解构美食...';
@@ -220,6 +316,7 @@
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
         resultState.textContent = '生成完成';
+        incrementUsage();
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
@@ -230,6 +327,10 @@
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      if (getDailyUsage() >= MAX_DAILY_LIMIT) {
+        showLimitModal();
+        return;
+      }
       const foodName = foodInput.value.trim();
       if (!foodName) return;
       generatePoster(foodName);
@@ -246,6 +347,10 @@
     retryBtn.addEventListener('click', () => {
       const foodName = foodInput.value.trim() || '红烧牛肉面';
       generatePoster(foodName);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCounterUI();
     });
   </script>
 </body>
