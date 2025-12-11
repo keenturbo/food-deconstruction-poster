@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>美食图解 · 解构式海报生成</title>
+  <style>
+    :root {
+      --bg: #050507;
+      --card: rgba(255, 255, 255, 0.04);
+      --card-strong: rgba(255, 255, 255, 0.08);
+      --accent: #ffb347;
+      --accent-2: #ff6f3c;
+      --muted: #9aa0b5;
+      --text: #f7f7fb;
+      --border: rgba(255, 255, 255, 0.12);
+      --grid-gap: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Space Grotesk", "Noto Sans SC", "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 111, 60, 0.12), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(255, 179, 71, 0.14), transparent 28%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: var(--text); text-decoration: none; }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: linear-gradient(120deg, rgba(255, 111, 60, 0.28), rgba(255, 179, 71, 0.24));
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      border: 1px solid var(--border);
+    }
+    h1 { margin: 8px 0 6px; font-size: 28px; letter-spacing: -0.4px; }
+    p.lead { margin: 0; color: var(--muted); max-width: 780px; line-height: 1.6; }
+    .layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; align-items: start; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+    }
+    .card-strong { background: var(--card-strong); border: 1px solid rgba(255,255,255,0.16); }
+    .section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; }
+    .section-title .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+
+    form { display: flex; flex-direction: column; gap: 14px; }
+    label { font-size: 13px; color: var(--muted); }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-size: 15px;
+    }
+    input[type="text"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    button.primary {
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0a0b0f;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    button.primary:active { transform: translateY(1px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25); }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--grid-gap);
+    }
+    .style-card {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b0d13;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.1s ease, transform 0.1s ease;
+    }
+    .style-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .style-card.active { border: 1px solid var(--accent); box-shadow: 0 0 0 2px rgba(255,179,71,0.18); }
+    .style-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .style-meta { padding: 12px; }
+    .style-meta h3 { margin: 0 0 4px; font-size: 15px; }
+    .style-meta p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,179,71,0.12); color: var(--accent); padding: 6px 10px; border-radius: 999px; font-size: 12px; border: 1px solid rgba(255,179,71,0.24); }
+
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--grid-gap); }
+    .preview-item { position: relative; border-radius: 12px; overflow: hidden; background: #0c0e14; border: 1px solid var(--border); }
+    .preview-item img { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .preview-item .label { position: absolute; bottom: 8px; left: 8px; padding: 6px 10px; background: rgba(0,0,0,0.55); border-radius: 999px; font-size: 12px; color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+
+    .status { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+    .dotping { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(255,179,71,0.5); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,179,71,0.6); } 70% { box-shadow: 0 0 0 12px rgba(255,179,71,0); } 100% { box-shadow: 0 0 0 0 rgba(255,179,71,0); } }
+
+    .result { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .result img { width: 100%; border-radius: 12px; border: 1px solid var(--border); background: #0b0c12; }
+    .hidden { display: none !important; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ghost-btn { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <div class="badge">Gemini 文生图 · 解构式美食海报</div>
+        <h1>美食图解 · 分层解构海报生成</h1>
+        <p class="lead">输入美食名称，自动拆解食材层次、质感与文化风格，生成纯黑背景的商业级分层海报。九宫格示例展示食材堆叠效果。</p>
+      </div>
+      <div class="pill">Single Style · food_poster</div>
+    </header>
+
+    <div class="layout">
+      <div class="card card-strong">
+        <div class="section-title"><span class="dot"></span><span>提交美食名称</span></div>
+        <form id="generate-form">
+          <div>
+            <label for="food-input">美食名称</label>
+            <input id="food-input" name="food_name" type="text" placeholder="例：红烧牛肉面 / Peking Duck" required />
+          </div>
+          <div class="style-grid" id="style-grid"></div>
+          <button class="primary" type="submit" id="submit-btn">生成分层海报</button>
+          <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待输入...</span></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="dot"></span><span>九宫格示例</span></div>
+        <div class="preview-grid" id="preview-grid"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 18px;">
+      <div class="section-title"><span class="dot"></span><span>生成结果</span></div>
+      <div class="result">
+        <div id="result-placeholder" class="status">未生成</div>
+        <img id="result-image" class="hidden" alt="生成的美食解构海报" />
+        <div class="actions hidden" id="result-actions">
+          <button class="primary" type="button" id="download-btn">下载图片</button>
+          <button class="ghost-btn" type="button" id="retry-btn">再生成一次</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const styles = [
+      {
+        key: 'food_poster',
+        title: '解构分层海报',
+        desc: '纯黑背景 · 纵向分层 · 中英双语标注 · 8K 质感',
+        thumb: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=900&q=80'
+      }
+    ];
+
+    const previewImages = [
+      { label: '牛肉面', url: 'https://images.unsplash.com/photo-1604908177683-2b9d4b7d8f69?auto=format&fit=crop&w=800&q=80' },
+      { label: '北京烤鸭', url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80' },
+      { label: '寿司拼盘', url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80' },
+      { label: '披萨', url: 'https://images.unsplash.com/photo-1601924582971-b4470cbd0b7f?auto=format&fit=crop&w=800&q=80' },
+      { label: '拉面', url: 'https://images.unsplash.com/photo-1543352634-87393f14db11?auto=format&fit=crop&w=800&q=80' },
+      { label: '炒饭', url: 'https://images.unsplash.com/photo-1605478060624-263fe6175c97?auto=format&fit=crop&w=800&q=80' },
+      { label: '汉堡', url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80' },
+      { label: '咖喱饭', url: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80' },
+      { label: '刨冰甜品', url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=800&q=80' }
+    ];
+
+    const styleGrid = document.getElementById('style-grid');
+    const previewGrid = document.getElementById('preview-grid');
+    const form = document.getElementById('generate-form');
+    const foodInput = document.getElementById('food-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const statusText = document.getElementById('status-text');
+    const resultImg = document.getElementById('result-image');
+    const resultPlaceholder = document.getElementById('result-placeholder');
+    const resultActions = document.getElementById('result-actions');
+    const downloadBtn = document.getElementById('download-btn');
+    const retryBtn = document.getElementById('retry-btn');
+
+    function renderStyles() {
+      styleGrid.innerHTML = styles.map((s, idx) => `
+        <div class="style-card ${idx === 0 ? 'active' : ''}" data-key="${s.key}">
+          <img src="${s.thumb}" alt="${s.title}" loading="lazy" />
+          <div class="style-meta">
+            <h3>${s.title}</h3>
+            <p>${s.desc}</p>
+          </div>
+        </div>
+      `).join('');
+      styleGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.style-card');
+        if (!card) return;
+        document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+    }
+
+    function renderPreviews() {
+      previewGrid.innerHTML = previewImages.map(p => `
+        <div class="preview-item">
+          <img src="${p.url}" alt="${p.label}" loading="lazy" />
+          <div class="label">${p.label}</div>
+        </div>
+      `).join('');
+    }
+
+    async function generatePoster(foodName, styleKey) {
+      statusText.textContent = '正在解构美食...';
+      submitBtn.disabled = true;
+      resultPlaceholder.textContent = '生成中...';
+      resultImg.classList.add('hidden');
+      resultActions.classList.add('hidden');
+      try {
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ character_name: foodName, style: styleKey })
+        });
+        if (!resp.ok) {
+          throw new Error('生成失败：' + resp.status);
+        }
+        const data = await resp.json();
+        if (!data.image_url) throw new Error('未返回图片地址');
+        resultImg.src = data.image_url;
+        resultImg.classList.remove('hidden');
+        resultPlaceholder.textContent = '';
+        resultActions.classList.remove('hidden');
+        statusText.textContent = '生成完成';
+      } catch (err) {
+        statusText.textContent = '错误：' + err.message;
+        resultPlaceholder.textContent = '生成失败';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const foodName = foodInput.value.trim();
+      if (!foodName) return;
+      const active = document.querySelector('.style-card.active');
+      const styleKey = active ? active.dataset.key : 'food_poster';
+      generatePoster(foodName, styleKey);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!resultImg.src) return;
+      const link = document.createElement('a');
+      link.href = resultImg.src;
+      link.download = 'food-poster.png';
+      link.click();
+    });
+
+    retryBtn.addEventListener('click', () => {
+      const active = document.querySelector('.style-card.active');
+      const styleKey = active ? active.dataset.key : 'food_poster';
+      const foodName = foodInput.value.trim() || '红烧牛肉面';
+      generatePoster(foodName, styleKey);
+    });
+
+    renderStyles();
+    renderPreviews();
+  </script>
+</body>
+</html>
