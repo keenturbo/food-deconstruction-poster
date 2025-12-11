@@ -101,8 +101,8 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.8) 100%),
-                  url('https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80') center/cover;
-      filter: saturate(0.85);
+                  url('https://food.snippet.pp.ua/food-poster.png.jpeg') center/cover;
+      filter: saturate(0.9);
       z-index: 0;
     }
     .result { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start; }
@@ -111,7 +111,7 @@
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .ghost-btn { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
     .result-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
-    .result-title .state { font-size: 14px; color: var(--muted); }
+    .result-title .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
@@ -137,7 +137,7 @@
       </div>
 
       <div class="result-panel">
-        <div class="result-title"><span class="dot"></span><span>生成结果</span><span class="state" id="result-state">未生成</span></div>
+        <div class="result-title"><span class="dot"></span><span>生成结果</span><span class="state" id="result-state"><span class="dotping"></span>未生成</span></div>
         <div class="result">
           <img id="result-image" class="hidden" alt="生成的美食解构海报" />
           <div class="actions hidden" id="result-actions">
@@ -162,7 +162,7 @@
 
     async function generatePoster(foodName) {
       statusText.textContent = '正在解构美食...';
-      resultState.textContent = '生成中...';
+      resultState.childNodes[1].textContent = '生成中...';
       submitBtn.disabled = true;
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
@@ -181,10 +181,10 @@
         resultImg.classList.remove('hidden');
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
-        resultState.textContent = '生成完成';
+        resultState.childNodes[1].textContent = '生成完成';
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
-        resultState.textContent = '生成失败';
+        resultState.childNodes[1].textContent = '生成失败';
       } finally {
         submitBtn.disabled = false;
       }
