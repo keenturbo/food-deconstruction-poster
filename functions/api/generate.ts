@@ -69,52 +69,62 @@ async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
 
 function buildPrompt(foodName: string) {
   const name = foodName.trim();
-  const localized = name;
+  const localized = name; // 可按需做本地化
   return `Generate one ultra-realistic PNG image only. Do not return text. Follow strictly:
-# Role: Master Food Deconstructionist & Designer
+# Role: Master Food Deconstructionist (Image Generator)
 
 # Task:
-When the user provides a Food Name, analyze its **authentic recipe**, deconstruct it into 6 logical vertical layers, and generate a prompt for a premium commercial poster.
+Analyze the Food Name, determine its cultural origin/recipe, and generate a prompt where **LABELS ARE EXPLICITLY DEFINED**. Then EXECUTE DRAWING.
 
-# Core Logic (The "Recipe-to-Visual" Process):
-1.  **Analyze Recipe:** Identify the Garnish, Main Protein, Side/Veg, Base/Carb, Sauce/Broth.
-2.  **Determine Culture:** Choose appropriate background typography (Chinese Calligraphy for CN food, Bold Sans for US food, etc.).
-3.  **Describe Textures:** Don't just say "Beef". Say "Juicy, seared beef slices with visible muscle grain and fat marbling."
+# Visual Structure:
+- **Background:** Pure black (#000000).
+- **Typography:** **VERTICAL STAGGERED CALLIGRAPHY** (CRITICAL).
+- **Layout:** **STRICT SINGLE VERTICAL STACK**.
 
 # Prompt Construction Template (For Image Generation):
-"Premium commercial food poster featuring deconstructed layers of **${name}** floating in a vertical stack on a pure black background (#000000). 
+"A premium commercial food poster featuring deconstructed layers of **${name}** floating in a **STRICT SINGLE VERTICAL STACK** on a pure black background (#000000).
 
-    **Background Design:**
-    - Massive, translucent background text **'${localized}'** in [Font Style: e.g., 'Chinese Calligraphy', 'Bold Sans'] (15% opacity) spans the height behind the ingredients.
+    **Background Typography (CRITICAL PRIORITY):**
+    - The text **'${localized}'** is written in **MASSIVE, BOLD CHINESE BRUSH CALLIGRAPHY**.
+    - **Arrangement:** The characters are arranged **VERTICALLY** from top to bottom, **STAGGERED/OFFSET** behind the food layers.
+    - **Style:** Translucent White (15% opacity).
+    - **Constraint:** Write the name ONLY ONCE in a large vertical sequence. Do not repeat.
 
-    **The Deconstructed Stack (Top to Bottom):
+    **The Stack (Top to Bottom):**
     
-    1) **Layer 1 (Garnish/Top):** A floating scatter of [Specific Garnish: e.g., 'crushed peanuts', 'chopped scallions', 'powdered sugar']. The particles are frozen in mid-air, sharp focus, showing distinct textures.
+    [AI: Insert 3-5 Dynamic Layers. MUST include a 'Dripping' liquid layer.]
     
-    2) **Layer 2 (Secondary/Veg):** [Secondary Ingredient: e.g., 'crispy pickled vegetables', 'fresh lettuce leaf', 'whipped cream']. Suspended in space, looking fresh and vibrant.
+    *   **Layer 1 (Top):** [Garnish/Top Ingredient]. Floating, sharp focus.
+    *   **Layer 2:** [Core Ingredient]. Rich texture.
+    *   **Layer 3 (The Action Layer):** [Sauce/Glaze/Juice] **DRIPPING DOWN** dynamically. High gloss.
+    *   **Layer ...:** [Base Ingredient].
     
-    3) **Layer 3 (The Core Protein/Filling):** [Main Ingredient: e.g., 'braised pork belly cubes', 'grilled beef patty']. Highly detailed, showing [Texture: 'glistening fat', 'sear marks', 'juicy interior'].
+    **Visual Separation Area:** An intentional empty vertical space filled with rising steam. **Do NOT contain any text or labels in this empty area.**
     
-    4) **Layer 4 (The Base/Carb):** [Base Ingredient: e.g., 'hand-pulled noodles', 'toasted bun', 'sushi rice']. The structure is clearly visible, with [Texture: 'fluffy', 'al dente', 'golden brown'].
-    
-    5) **Layer 5 (Liquid/Sauce):** A dynamic splash or floating layer of [Sauce/Broth: e.g., 'spicy chili oil', 'melted cheese', 'soy sauce']. It is translucent, glossy, with light reflecting off the liquid curves.
-    
-    6) **Transition Gap:** A large EMPTY SPACE with only subtle [Atmosphere: 'steam wisps', 'oil droplets', 'crumbs'] drifting down.
-    
-    7) **Layer 7 (The Reveal):** A complete, finished **${name}** plated in a [Vessel]. It contains all the above ingredients combined perfectly. The dish looks freshly cooked, hot, and appetizing.
+    **Bottom Layer (The Reveal):** A complete, finished **${name}** plated in [Vessel], sitting directly at the bottom.
+
+    **Labeling Instructions:**
+    - Add pointers with **EXACT BILINGUAL LABELS** for each solid layer:
+      - Pointing to Layer 1: "[Layer 1 Name CN] [Layer 1 Name EN]"
+      - Pointing to Layer 2: "[Layer 2 Name CN] [Layer 2 Name EN]"
+      - Pointing to Bottom Dish: "成品 Finished Dish"
+    - **IMPORTANT: Do NOT write 'Empty Space'.**
+
+    **Label Styling (Luxury Aesthetics):**
+    - **Color:** Text and pointer lines are **ELEGANT CHAMPAGNE GOLD (#F7E7CE)**.
+    - **Font:** Chinese **Slim Serif ** + English **Small Caps**.
+    - **Lines:** Ultra-thin gold lines pointing to ingredients.
 
     **Details:**
-    - Chinese/English bilingual labels with elegant thin lines pointing to each layer: '[Label 1]', '[Label 2]', '[Label 3]', '[Label 4]', '成品 Finished Dish'.
-    - **Lighting:** Dramatic 45-degree studio lighting, rim lights highlighting the edges of the food.
-    - **Perspective:** All layers viewed from a consistent 45-degree angle. No base/pedestal.
-    - 8k resolution, ultra-realistic food photography."
+    - **NO SPLIT SCREEN.** All elements centered.
+    - Dramatic studio lighting, rim lights, 8k resolution, vertical format."
 
 # User Input Handling:
 - Wait for the user to provide a food name.
 - **Action:**
-    1.  **Recipe Check:** Break down the food into the 5-7 specific layers defined above.
-    2.  **Culture Check:** Set the background font style.
-    3.  Generate the detailed prompt.
+    1.  **Culture Check:** Use "Vertical Calligraphy" for Chinese food.
+    2.  **Recipe Check:** Pre-calculate layers and labels.
+    3.  **GENERATE IMAGE.**
 `;
 }
 
