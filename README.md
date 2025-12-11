@@ -18,8 +18,6 @@ Cloudflare Pages + Functions + R2 + Gemini 文生图，生成“解构式”美�
 4) 管理端：`/admin.html`（需已存在于 Pages 资源），填入唯一风格 `food_poster` 的提示词与缩略图。
 5) 生成：前端 POST `/api/generate`，字段 `character_name`=美食名，`style`=`food_poster`；后端生成图像写入 R2，返回可公开访问的 URL。
 
-## 提示词（放入 admin 配置，key: food_poster）
-
 
 ## 开发要点
 - 仅需重做 `public/index.html` 的 UI/文案/示例图，提交时保持 POST 字段名为 `character_name` 与 `style=food_poster`，后端无须大改。
