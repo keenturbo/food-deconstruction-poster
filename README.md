@@ -1,55 +1,48 @@
-# 美食图解 · 解构式海报生成
+# 解构式美食海报 (Food Deconstruction Poster)
 
-基于 Cloudflare Pages + Functions + Gemini 的极简美食解构海报生成器。输入美食名称，AI 自动拆解食材、分析文化风格，生成纯黑背景的纵向分层解构海报。
+输入美食名称，自动拆解食材层次、质感与文化风格，生成纯黑背景的商业级分层海报。
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/keenturbo/food-deconstruction-poster)
+![Cover](https://food.snippet.pp.ua/IMG_5090.jpeg)
 
-## ✨ 项目亮点 (MVP)
-- **极简前端**：单页应用，无服务器，无数据库。
-- **智能生成**：后端集成 Gemini Pro Vision/Image 模型，通过精心设计的 Prompt 实现“食谱分析 -> 视觉解构”。
-- **即时反馈**：生成结果直接以 Base64 流返回，无需配置存储桶即可运行。
-- **交互体验**：
-  - 每日限免 3 次（基于 LocalStorage）。
-  - 随机展示精美案例作为等待区背景（支持从 R2 加载）。
-  - 支持一键下载高清海报。
+## ✨ 特性
 
-## 🛠️ 快速部署指南
+- **Gemini 驱动**：利用 Gemini 3.x 图像模型生成垂直分层解构海报。
+- **极致 Prompt**：内置大师级解构提示词，强制垂直构图与双语标注。
+- **极简架构**：纯静态前端 + Cloudflare Functions，无服务器负担。
+- **每日限额**：前端本地实现每日 3 次免费生成额度（localStorage 计数）。
+- **MVP 设计**：Base64 图片直出，无需配置对象存储即可运行；随机示例背景可直接使用公网图/R2 图床。
+
+## 🛠️ 部署指南
 
 ### 1. 准备工作
-- 拥有一个 Cloudflare 账号。
-- 申请 Google Gemini API Key（支持文生图的模型）。
+- Cloudflare 账号
+- Google Gemini API Key（支持图像生成的模型）
 
 ### 2. 一键部署
-1. 点击上方的 **Deploy to Cloudflare** 按钮。
-2. 授权 Cloudflare 访问你的 GitHub 账号并选择仓库。
-3. 在部署配置页面，**构建命令 (Build command)** 和 **输出目录 (Build output directory)** 均留空即可（本项目为纯静态 + Functions）。
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/keenturbo/food-deconstruction-poster)
 
-### 3. 配置环境变量 (关键)
-部署完成后，进入 Cloudflare Pages 项目后台 -> **Settings** -> **Environment variables**，添加以下变量：
+### 3. 手动部署
+1. **Fork/Clone**：
+    ```bash
+    git clone https://github.com/keenturbo/food-deconstruction-poster.git
+    ```
+2. **Cloudflare Pages**：Dashboard → Pages → Create project → Connect to Git → 选择本仓库。
+3. **构建配置**：
+   - Build command：留空（静态 + Functions）
+   - Build output directory：`public`
+4. **环境变量（必填）**：
+   - `GEMINI_API_KEY`：你的 Gemini API Key
+   - `AI_MODEL_NAME`（可选）：如 `gemini-3-pro-image-preview`（未设置则使用默认值）
 
-| 变量名 | 描述 | 示例值 |
-|--------|------|--------|
-| `GEMINI_API_KEY` | **(必填)** Google AI Studio API Key | `AIzaSy...` |
-| `AI_MODEL_NAME` | (可选) 指定模型版本 | `gemini-1.5-flash` 或 `gemini-2.0-flash-exp` |
-
-> **注意**：无需配置 KV 或 R2 即可跑通 MVP 流程。
-
-### 4. 重新部署
-保存环境变量后，进入 **Deployments** 标签页，点击最新的部署记录右侧的三个点 -> **Retry deployment**，以使环境变量生效。
+保存后重新触发一次部署以生效环境变量。
 
 ## 📂 项目结构
-- **`public/index.html`**
-  - 核心前端逻辑。
-  - 包含 UI 布局、随机背景加载、API 请求、Base64 图片展示、下载功能及限次逻辑。
-- **`functions/api/generate.ts`**
-  - 核心后端逻辑 (Serverless)。
-  - 接收前端 JSON 请求 `{ character_name: "..." }`。
-  - 构建复杂的“美食解构”提示词 (Prompt)。
-  - 调用 Gemini API 生成图片并处理返回数据。
+- `public/index.html`：前端单页，包含额度限制、本地存储、随机示例背景、请求与展示逻辑。
+- `functions/api/generate.ts`：后端 Cloudflare Function，构建提示词并调用 Gemini，返回 Base64 Data URL。
 
-## 🎨 自定义配置
-- **修改提示词**：编辑 `functions/api/generate.ts` 中的 `buildPrompt` 函数。
-- **替换背景图**：编辑 `public/index.html` 中的 `sampleImages` 数组，填入你自己的图片 URL（推荐使用 R2 或图床）。
+## ⚠️ 说明
+- 当前为 MVP，生成结果直接以 Base64 返回，不做持久化；刷新或关闭页面后需自行下载。
+- 示例背景随机读取公网/R2 图片，可在 `public/index.html` 的 `sampleImages` 中替换。
 
-## 🤝 贡献与支持
-本项目为 MVP 版本，欢迎 Fork 修改。如需商业化功能（如支付、用户系统、历史记录存储），建议接入 Supabase 或 Cloudflare D1 + R2。
+## 🤝 贡献
+欢迎 Fork 和改造。如需商用或持久化方案，可接入 R2/D1/Supabase 等存储与鉴权。
