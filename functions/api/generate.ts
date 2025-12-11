@@ -84,11 +84,11 @@ Analyze the Food Name, determine its cultural origin/recipe, and generate a prom
 # Prompt Construction Template (For Image Generation):
 "A premium commercial food poster featuring deconstructed layers of **${name}** floating in a **STRICT SINGLE VERTICAL STACK** on a pure black background (#000000).
 
-    **Background Typography (CRITICAL PRIORITY):**
-    - The text **'${localized}'** is written in **MASSIVE, BOLD CHINESE BRUSH CALLIGRAPHY**.
-    - **Arrangement:** The characters are arranged **VERTICALLY** from top to bottom, **STAGGERED/OFFSET** behind the food layers.
-    - **Style:** Translucent White (15% opacity).
-    - **Constraint:** Write the name ONLY ONCE in a large vertical sequence. Do not repeat.
+    **Background Typography (CRITICAL - HARD CONSTRAINT):**
+    - The text **'${localized_name_large}'** is written in **MASSIVE CHINESE BRUSH CALLIGRAPHY**.
+    - **FORCED LAYOUT:** The characters MUST be arranged in a **SINGLE VERTICAL COLUMN** from top to bottom.
+    - **Style:** If the name is long (e.g., >4 chars), allow the characters to overlap slightly or stagger left/right to fit the height, but maintain the **VERTICAL FLOW**.
+    - **Constraint:** Write the exact string **'${localized_name_large}'** ONLY ONCE. Do NOT break it into multiple blocks. Do NOT switch to horizontal.
 
     **The Stack (Top to Bottom):**
     
@@ -99,9 +99,14 @@ Analyze the Food Name, determine its cultural origin/recipe, and generate a prom
     *   **Layer 3 (The Action Layer):** [Sauce/Glaze/Juice] **DRIPPING DOWN** dynamically. High gloss.
     *   **Layer ...:** [Base Ingredient].
     
-    **Visual Separation Area:** An intentional empty vertical space filled with rising steam. **Do NOT contain any text or labels in this empty area.**
+    **Visual Gap:** An intentional empty vertical space filled with rising steam. **DO NOT LABEL THIS AREA.**
     
     **Bottom Layer (The Reveal):** A complete, finished **${name}** plated in [Vessel], sitting directly at the bottom.
+
+    **Label Styling (Luxury Aesthetics):**
+    - **Color:** Text and pointer lines are **ELEGANT CHAMPAGNE GOLD (#F7E7CE)**.
+    - **Font:** Chinese **Slim Serif (细宋体)** + English **Small Caps**.
+    - **Lines:** Ultra-thin gold lines pointing to ingredients.
 
     **Labeling Instructions:**
     - Add pointers with **EXACT BILINGUAL LABELS** for each solid layer:
@@ -109,11 +114,6 @@ Analyze the Food Name, determine its cultural origin/recipe, and generate a prom
       - Pointing to Layer 2: "[Layer 2 Name CN] [Layer 2 Name EN]"
       - Pointing to Bottom Dish: "成品 Finished Dish"
     - **IMPORTANT: Do NOT write 'Empty Space'.**
-
-    **Label Styling (Luxury Aesthetics):**
-    - **Color:** Text and pointer lines are **ELEGANT CHAMPAGNE GOLD (#F7E7CE)**.
-    - **Font:** Chinese **Slim Serif ** + English **Small Caps**.
-    - **Lines:** Ultra-thin gold lines pointing to ingredients.
 
     **Details:**
     - **NO SPLIT SCREEN.** All elements centered.
