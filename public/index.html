@@ -88,7 +88,7 @@
 
     .result-panel {
       position: relative;
-      min-height: 380px;
+      min-height: 760px;
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid var(--border);
@@ -96,6 +96,9 @@
       display: grid;
       grid-template-rows: auto 1fr auto;
       padding: 14px;
+    }
+    @media (max-width: 980px) {
+      .result-panel { min-height: 70vh; }
     }
     .result-panel::before {
       content: "";
@@ -164,6 +167,19 @@
     const resultState = document.getElementById('result-state');
     const retryBtn = document.getElementById('retry-btn');
     const downloadBtn = document.getElementById('download-btn');
+
+    const sampleImages = [
+      'https://food.snippet.pp.ua/IMG_5076.jpeg',
+      'https://food.snippet.pp.ua/IMG_5079.jpeg',
+      'https://food.snippet.pp.ua/IMG_5082.jpeg',
+      'https://food.snippet.pp.ua/IMG_5083.jpeg',
+      'https://food.snippet.pp.ua/IMG_5084.jpeg',
+      'https://food.snippet.pp.ua/IMG_5085.jpeg',
+      'https://food.snippet.pp.ua/IMG_5087.jpeg',
+      'https://food.snippet.pp.ua/food-poster.png.jpeg'
+    ];
+    const pick = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+    document.documentElement.style.setProperty('--sample', `url('${pick}')`);
 
     async function generatePoster(foodName) {
       statusText.textContent = '正在解构美食...';
