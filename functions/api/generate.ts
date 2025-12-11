@@ -1,7 +1,8 @@
 import type { RequestHandler } from "@cloudflare/workers-types";
 
-const DEFAULT_MODEL = "gemini-2.0-flash-exp";
-const DEFAULT_API_URL = (model: string) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateImage`;
+const DEFAULT_MODEL = "gemini-1.5-flash-latest";
+const DEFAULT_API_URL = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
   const url = `${apiUrl}?key=${encodeURIComponent(apiKey)}`;
@@ -12,6 +13,9 @@ async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
         parts: [{ text: prompt }],
       },
     ],
+    generationConfig: {
+      responseMimeType: "image/png",
+    },
     safetySettings: [
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -34,7 +38,8 @@ async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
   }
 
   const data = await resp.json();
-  const inline = data?.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData;
+  const partWithInline = data?.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+  const inline = partWithInline?.inlineData;
   if (!inline?.data) throw new Error("Gemini 响应缺少图片数据");
   const mime = inline.mimeType || "image/png";
   return { base64: inline.data as string, mime };
@@ -83,9 +88,12 @@ export const onRequestPost: RequestHandler = async ({ request, env }) => {
     const { base64, mime } = await callGeminiImage(apiUrl, apiKey, prompt);
     const imageUrl = `data:${mime};base64,${base64}`;
 
-    return new Response(JSON.stringify({ image_url: imageUrl, style: style || "food_poster" }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ image_url: imageUrl, style: style || "food_poster" }),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || "未知错误" }), { status: 500 });
   }
