@@ -58,7 +58,7 @@
 
     form { display: flex; flex-direction: column; gap: 14px; }
     label { font-size: 13px; color: var(--muted); }
-    input[type="text"] {
+    input[type="text"], input[type="password"] {
       width: 100%;
       padding: 14px;
       border-radius: 12px;
@@ -67,7 +67,7 @@
       color: var(--text);
       font-size: 15px;
     }
-    input[type="text"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    input[type="text"]:focus, input[type="password"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
     button.primary {
       padding: 14px;
       border-radius: 12px;
@@ -135,7 +135,18 @@
     .result-title { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.2px; }
     .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 
+    .counter-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
     .counter { font-size: 12px; color: var(--muted); }
+    .link-btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -151,7 +162,7 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 20px;
-      max-width: 420px;
+      max-width: 460px;
       width: 100%;
       color: var(--text);
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
@@ -198,7 +209,10 @@
             <input id="food-input" name="food_name" type="text" placeholder="例：红烧牛肉面 / Peking Duck" required />
           </div>
           <button class="primary" type="submit" id="submit-btn">生成分层海报</button>
-          <div class="counter" id="limit-counter">今日剩余：3/3</div>
+          <div class="counter-row">
+            <div class="counter" id="limit-counter">今日免费剩余：3/3</div>
+            <button class="link-btn" type="button" id="add-key-btn">添加自己的 key</button>
+          </div>
           <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待输入...</span></div>
         </form>
       </div>
@@ -222,16 +236,31 @@
   <div id="limit-modal" class="modal-backdrop hidden">
     <div class="modal">
       <h3>今日免费额度已用完</h3>
-      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持。</p>
+      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持，或添加你的 Gemini Key 解锁不限次。</p>
       <div class="modal-actions">
         <a class="btn-secondary" href="https://github.com/keenturbo/food-deconstruction-poster" target="_blank" rel="noreferrer">GitHub 免费部署</a>
         <a class="btn-secondary" href="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" target="_blank" rel="noreferrer">赞赏码</a>
+        <button class="btn-secondary" type="button" onclick="openKeyModal()">添加自己的 Key</button>
       </div>
-      <div style="margin-top:12px; display:flex; justify-content:center;">
+      <div style="margin-top:12px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
         <img class="qr" src="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" alt="赞赏码" />
       </div>
       <div style="margin-top:14px; text-align:right;">
         <button class="ghost-btn" type="button" onclick="closeLimitModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="key-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>添加你的 Gemini API Key</h3>
+      <p>填入你自己的付费层级 Google Gemini API Key，本地保存（LocalStorage），仅你可见，优先调用，不消耗本站免费额度。</p>
+      <div style="margin-bottom:12px;">
+        <input id="user-key-input" type="password" placeholder="粘贴你的 Gemini API Key" />
+      </div>
+      <div class="modal-actions">
+        <button class="primary" type="button" onclick="saveUserKey()">保存</button>
+        <button class="ghost-btn" type="button" onclick="closeKeyModal()">取消</button>
       </div>
     </div>
   </div>
@@ -248,8 +277,12 @@
     const downloadBtn = document.getElementById('download-btn');
     const limitCounter = document.getElementById('limit-counter');
     const limitModal = document.getElementById('limit-modal');
+    const keyModal = document.getElementById('key-modal');
+    const addKeyBtn = document.getElementById('add-key-btn');
+    const userKeyInput = document.getElementById('user-key-input');
 
     const MAX_DAILY_LIMIT = 3;
+    const LS_KEY = 'gemini_user_key';
 
     const sampleImages = [
       'https://food.snippet.pp.ua/IMG_5076.jpeg',
@@ -267,6 +300,30 @@
     ];
     const pick = sampleImages[Math.floor(Math.random() * sampleImages.length)];
     document.documentElement.style.setProperty('--sample', `url('${pick}')`);
+
+    function getUserKey() {
+      return localStorage.getItem(LS_KEY) || '';
+    }
+
+    function saveUserKey() {
+      const val = userKeyInput.value.trim();
+      if (val) {
+        localStorage.setItem(LS_KEY, val);
+      } else {
+        localStorage.removeItem(LS_KEY);
+      }
+      closeKeyModal();
+      updateCounterUI();
+    }
+
+    function openKeyModal() {
+      userKeyInput.value = getUserKey();
+      keyModal.classList.remove('hidden');
+    }
+
+    function closeKeyModal() {
+      keyModal.classList.add('hidden');
+    }
 
     function getDailyUsage() {
       const today = new Date().toISOString().split('T')[0];
@@ -287,7 +344,10 @@
 
     function updateCounterUI() {
       const remaining = Math.max(0, MAX_DAILY_LIMIT - getDailyUsage());
-      limitCounter.textContent = `今日剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+      const hasUserKey = !!getUserKey();
+      limitCounter.textContent = hasUserKey
+        ? '已加载自定义 Key，免费额度不限'
+        : `今日免费剩余：${remaining}/${MAX_DAILY_LIMIT}`;
     }
 
     function showLimitModal() {
@@ -305,10 +365,11 @@
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
       try {
+        const userKey = getUserKey();
         const resp = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ character_name: foodName, style: 'food_poster' })
+          body: JSON.stringify({ character_name: foodName, style: 'food_poster', customKey: userKey })
         });
         if (!resp.ok) {
           throw new Error('生成失败：' + resp.status);
@@ -320,7 +381,9 @@
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
         resultState.textContent = '生成完成';
-        incrementUsage();
+        if (!userKey) {
+          incrementUsage();
+        }
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
@@ -331,7 +394,8 @@
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (getDailyUsage() >= MAX_DAILY_LIMIT) {
+      const userKey = getUserKey();
+      if (!userKey && getDailyUsage() >= MAX_DAILY_LIMIT) {
         showLimitModal();
         return;
       }
@@ -352,6 +416,8 @@
       const foodName = foodInput.value.trim() || '红烧牛肉面';
       generatePoster(foodName);
     });
+
+    addKeyBtn.addEventListener('click', openKeyModal);
 
     window.addEventListener('DOMContentLoaded', () => {
       updateCounterUI();
