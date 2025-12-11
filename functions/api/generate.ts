@@ -15,6 +15,8 @@ async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
     ],
     generationConfig: {
       candidateCount: 1,
+      responseModalities: ["IMAGE"],
+      temperature: 0.6,
     },
     safetySettings: [
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
@@ -67,8 +69,9 @@ async function callGeminiImage(apiUrl: string, apiKey: string, prompt: string) {
 
 function buildPrompt(foodName: string) {
   const name = foodName.trim();
-  const localized = name; // 可按需做本地化
-  return `# Role: Master Food Deconstructionist & Designer
+  const localized = name;
+  return `Generate one ultra-realistic PNG image only. Do not return text. Follow strictly:
+# Role: Master Food Deconstructionist & Designer
 
 # Task:
 When the user provides a Food Name, analyze its **authentic recipe**, deconstruct it into 6 logical vertical layers, and generate a prompt for a premium commercial poster.
