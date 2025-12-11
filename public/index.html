@@ -38,14 +38,6 @@
       gap: 12px;
       margin-bottom: 18px;
     }
-    .badge {
-      padding: 6px 10px;
-      border-radius: 12px;
-      background: linear-gradient(120deg, rgba(255, 111, 60, 0.28), rgba(255, 179, 71, 0.24));
-      font-size: 12px;
-      letter-spacing: 0.4px;
-      border: 1px solid var(--border);
-    }
     h1 { margin: 8px 0 6px; font-size: 28px; letter-spacing: -0.4px; }
     p.lead { margin: 0; color: var(--muted); max-width: 780px; line-height: 1.6; }
     .layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; align-items: start; }
@@ -101,7 +93,7 @@
       border: 1px solid var(--border);
       background: #0b0c12;
       display: grid;
-      grid-template-rows: 1fr auto;
+      grid-template-rows: auto 1fr auto;
       padding: 14px;
     }
     .result-panel::before {
@@ -113,19 +105,19 @@
       filter: saturate(0.85);
       z-index: 0;
     }
-    .result { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .result { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start; }
     .result img { width: 100%; border-radius: 12px; border: 1px solid var(--border); background: #0b0c12; }
-    .result-overlay { position: relative; z-index: 1; }
     .hidden { display: none !important; }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .ghost-btn { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+    .result-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
+    .result-title .state { font-size: 14px; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="page">
     <header>
       <div>
-        <div class="badge">解构式美食海报</div>
         <h1>解构式美食海报</h1>
         <p class="lead">输入美食名称，自动拆解食材层次、质感与文化风格，生成纯黑背景的商业级分层海报。</p>
       </div>
@@ -145,9 +137,8 @@
       </div>
 
       <div class="result-panel">
-        <div class="section-title result-overlay"><span class="dot"></span><span>生成结果</span></div>
-        <div class="result result-overlay">
-          <div id="result-placeholder" class="status">未生成</div>
+        <div class="result-title"><span class="dot"></span><span>生成结果</span><span class="state" id="result-state">未生成</span></div>
+        <div class="result">
           <img id="result-image" class="hidden" alt="生成的美食解构海报" />
           <div class="actions hidden" id="result-actions">
             <button class="primary" type="button" id="download-btn">下载图片</button>
@@ -164,15 +155,15 @@
     const submitBtn = document.getElementById('submit-btn');
     const statusText = document.getElementById('status-text');
     const resultImg = document.getElementById('result-image');
-    const resultPlaceholder = document.getElementById('result-placeholder');
     const resultActions = document.getElementById('result-actions');
-    const downloadBtn = document.getElementById('download-btn');
+    const resultState = document.getElementById('result-state');
     const retryBtn = document.getElementById('retry-btn');
+    const downloadBtn = document.getElementById('download-btn');
 
     async function generatePoster(foodName) {
       statusText.textContent = '正在解构美食...';
+      resultState.textContent = '生成中...';
       submitBtn.disabled = true;
-      resultPlaceholder.textContent = '生成中...';
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
       try {
@@ -188,12 +179,12 @@
         if (!data.image_url) throw new Error('未返回图片地址');
         resultImg.src = data.image_url;
         resultImg.classList.remove('hidden');
-        resultPlaceholder.textContent = '';
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
+        resultState.textContent = '生成完成';
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
-        resultPlaceholder.textContent = '生成失败';
+        resultState.textContent = '生成失败';
       } finally {
         submitBtn.disabled = false;
       }
