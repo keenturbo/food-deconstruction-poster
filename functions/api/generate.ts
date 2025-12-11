@@ -85,10 +85,10 @@ Analyze the Food Name, determine its cultural origin/recipe, and generate a prom
 "A premium commercial food poster featuring deconstructed layers of **${name}** floating in a **STRICT SINGLE VERTICAL STACK** on a pure black background (#000000).
 
     **Background Typography (CRITICAL - HARD CONSTRAINT):**
-    - The text **'${localized_name_large}'** is written in **MASSIVE CHINESE BRUSH CALLIGRAPHY**.
+    - The text **'${localized}'** is written in **MASSIVE CHINESE BRUSH CALLIGRAPHY**.
     - **FORCED LAYOUT:** The characters MUST be arranged in a **SINGLE VERTICAL COLUMN** from top to bottom.
     - **Style:** If the name is long (e.g., >4 chars), allow the characters to overlap slightly or stagger left/right to fit the height, but maintain the **VERTICAL FLOW**.
-    - **Constraint:** Write the exact string **'${localized_name_large}'** ONLY ONCE. Do NOT break it into multiple blocks. Do NOT switch to horizontal.
+    - **Constraint:** Write the exact string **'${localized}'** ONLY ONCE. Do NOT break it into multiple blocks. Do NOT switch to horizontal.
 
     **The Stack (Top to Bottom):**
     
