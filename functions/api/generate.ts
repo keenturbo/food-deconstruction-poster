@@ -131,15 +131,15 @@ Analyze the Food Name, determine its cultural origin/recipe, and generate a prom
 
 export const onRequestPost: RequestHandler = async ({ request, env }) => {
   try {
-    const { character_name, food_name, style } = await request.json<any>();
+    const { character_name, food_name, style, customKey } = await request.json<any>();
     const name = (food_name || character_name || "").trim();
     if (!name) {
       return new Response(JSON.stringify({ error: "缺少美食名称" }), { status: 400 });
     }
 
-    const apiKey = env.GEMINI_API_KEY;
+    const apiKey = (customKey && customKey.trim()) || env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "缺少 GEMINI_API_KEY" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "缺少 GEMINI_API_KEY 或用户自定义 Key" }), { status: 500 });
     }
 
     const model = env.AI_MODEL_NAME || DEFAULT_MODEL;
