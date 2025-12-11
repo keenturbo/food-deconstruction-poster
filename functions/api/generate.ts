@@ -1,6 +1,6 @@
 import type { RequestHandler } from "@cloudflare/workers-types";
 
-const DEFAULT_MODEL = "gemini-1.5-flash-latest";
+const DEFAULT_MODEL = "imagen-3.0-fast-generate-001";
 const DEFAULT_API_URL = (model: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
