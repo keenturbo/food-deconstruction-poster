@@ -54,7 +54,7 @@
     }
     .card-strong { background: var(--card-strong); border: 1px solid rgba(255,255,255,0.16); }
     .section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; }
-    .section-title .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex-shrink: 0; }
 
     form { display: flex; flex-direction: column; gap: 14px; }
     label { font-size: 13px; color: var(--muted); }
@@ -111,8 +111,9 @@
     .hidden { display: none !important; }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .ghost-btn { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
-    .result-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
-    .result-title .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+    .result-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
+    .result-title { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.2px; }
+    .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
@@ -138,7 +139,10 @@
       </div>
 
       <div class="result-panel">
-        <div class="result-title"><span class="dot"></span><span>生成结果</span><span class="state" id="result-state">未生成</span></div>
+        <div class="result-header">
+          <div class="result-title"><span class="dot"></span><span>生成结果</span></div>
+          <div class="state" id="result-state">未生成</div>
+        </div>
         <div class="result">
           <img id="result-image" class="hidden" alt="生成的美食解构海报" />
           <div class="actions hidden" id="result-actions">
