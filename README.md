@@ -43,6 +43,6 @@
 ## ⚠️ 说明
 - 当前为 MVP，生成结果直接以 Base64 返回，不做持久化；刷新或关闭页面后需自行下载。
 - 示例背景随机读取公网/R2 图片，可在 `public/index.html` 的 `sampleImages` 中替换。
-
+![food-poster.png 5.jpeg](https://icon.pp.ua/file/1765515078682_food-poster.png_5.jpeg)
 ## 🤝 贡献
 欢迎 Fork 和改造。如需商用或持久化方案，可接入 R2/D1/Supabase 等存储与鉴权。
