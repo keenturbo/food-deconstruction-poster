@@ -189,6 +189,9 @@
       background: #0f0f12;
       object-fit: contain;
     }
+
+    .error-hint { color: #ff6b6b; font-size: 13px; margin-top: 4px; }
+    .error-hint a { color: var(--accent); text-decoration: underline; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -371,9 +374,22 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ character_name: foodName, style: 'food_poster', customKey: userKey })
         });
+
         if (!resp.ok) {
-          throw new Error('生成失败：' + resp.status);
+          let errorMsg = '生成失败：' + resp.status;
+          try {
+            const errData = await resp.json();
+            if (errData.error) {
+              errorMsg = errData.error;
+            }
+          } catch (e) {}
+
+          if (resp.status === 500 && !userKey) {
+            errorMsg = '服务暂不可用，请点击「添加自己的 key」填入你的 Gemini API Key 后重试';
+          }
+          throw new Error(errorMsg);
         }
+
         const data = await resp.json();
         if (!data.image_url) throw new Error('未返回图片地址');
         resultImg.src = data.image_url;
