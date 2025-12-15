@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单管理后台 - 解构式美食海报</title>
+  <style>
+    :root {
+      --bg: #050507;
+      --card: rgba(255, 255, 255, 0.04);
+      --card-strong: rgba(255, 255, 255, 0.08);
+      --accent: #ffb347;
+      --accent-2: #ff6f3c;
+      --muted: #9aa0b5;
+      --text: #f7f7fb;
+      --border: rgba(255, 255, 255, 0.12);
+      --success: #4ade80;
+      --danger: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Space Grotesk", "Noto Sans SC", "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 111, 60, 0.08), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(255, 179, 71, 0.10), transparent 28%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 18px 48px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      letter-spacing: -0.3px;
+    }
+    p.lead {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(6px);
+    }
+    .card-strong {
+      background: var(--card-strong);
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      margin: 0 0 14px;
+      letter-spacing: 0.2px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      flex-shrink: 0;
+    }
+
+    .login-form {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .login-form label {
+      font-size: 13px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .login-form input {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-size: 14px;
+      width: 280px;
+    }
+    .login-form input:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
+    }
+    .btn {
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease, opacity 0.08s ease;
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0a0b0f;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #0a0b0f;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      min-width: 120px;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .stat-card.pending .value { color: var(--accent); }
+    .stat-card.confirmed .value { color: var(--success); }
+    .stat-card.rejected .value { color: var(--danger); }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .filter-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+    .filter-btn:hover {
+      border-color: rgba(255,179,71,0.4);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      border-color: var(--accent);
+      background: rgba(255,179,71,0.12);
+      color: var(--text);
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .orders-table th,
+    .orders-table td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .orders-table th {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .orders-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+    .orders-table .order-id {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .orders-table .food-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .orders-table .order-code {
+      font-family: ui-monospace, monospace;
+      background: rgba(255,179,71,0.15);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .orders-table .pay-method {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .orders-table .remark {
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .orders-table .time {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.pending {
+      background: rgba(255,179,71,0.15);
+      color: var(--accent);
+    }
+    .status-badge.confirmed {
+      background: rgba(74,222,128,0.15);
+      color: var(--success);
+    }
+    .status-badge.rejected {
+      background: rgba(255,107,107,0.15);
+      color: var(--danger);
+    }
+    .action-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .action-btns .btn {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      z-index: 9999;
+      animation: toastIn 0.2s ease;
+    }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .orders-table {
+        display: block;
+        overflow-x: auto;
+      }
+      .login-form input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>订单管理后台</h1>
+    <p class="lead">解构式美食海报 · 订单审核与管理</p>
+
+    <div id="login-section" class="card card-strong">
+      <div class="section-title"><span class="dot"></span><span>管理员登录</span></div>
+      <div class="login-form">
+        <div>
+          <label for="admin-password">管理员密码</label>
+          <input type="password" id="admin-password" placeholder="输入管理员密码" />
+        </div>
+        <button class="btn btn-primary" id="login-btn">登录</button>
+      </div>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+      <div class="stats-row">
+        <div class="stat-card pending">
+          <div class="label">待确认</div>
+          <div class="value" id="stat-pending">0</div>
+        </div>
+        <div class="stat-card confirmed">
+          <div class="label">已确认</div>
+          <div class="value" id="stat-confirmed">0</div>
+        </div>
+        <div class="stat-card rejected">
+          <div class="label">已拒绝</div>
+          <div class="value" id="stat-rejected">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">总订单</div>
+          <div class="value" id="stat-total">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="dot"></span><span>订单列表</span></div>
+
+        <div class="filter-row">
+          <button class="filter-btn active" data-status="">全部</button>
+          <button class="filter-btn" data-status="pending">待确认</button>
+          <button class="filter-btn" data-status="confirmed">已确认</button>
+          <button class="filter-btn" data-status="rejected">已拒绝</button>
+          <button class="btn btn-ghost" id="refresh-btn" style="margin-left:auto;">刷新</button>
+        </div>
+
+        <div id="orders-container">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>订单ID</th>
+                <th>美食名称</th>
+                <th>订单号</th>
+                <th>支付方式</th>
+                <th>备注</th>
+                <th>状态</th>
+                <th>时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+            </tbody>
+          </table>
+          <div id="empty-state" class="empty-state hidden">
+            <div class="icon">📋</div>
+            <div>暂无订单</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const loginSection = document.getElementById('login-section');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminPasswordInput = document.getElementById('admin-password');
+    const loginBtn = document.getElementById('login-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const ordersTbody = document.getElementById('orders-tbody');
+    const emptyState = document.getElementById('empty-state');
+
+    const statPending = document.getElementById('stat-pending');
+    const statConfirmed = document.getElementById('stat-confirmed');
+    const statRejected = document.getElementById('stat-rejected');
+    const statTotal = document.getElementById('stat-total');
+
+    const LS_ADMIN_KEY = 'admin_password';
+    let currentPassword = '';
+    let currentFilter = '';
+    let allOrders = [];
+
+    function showToast(message, type = 'info') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function formatTime(isoString) {
+      if (!isoString) return '-';
+      const d = new Date(isoString);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function formatPayMethod(method) {
+      const map = {
+        wechat: '微信',
+        alipay: '支付宝',
+        hongbao: '口令红包'
+      };
+      return map[method] || method || '-';
+    }
+
+    function truncate(str, len) {
+      if (!str) return '-';
+      return str.length > len ? str.slice(0, len) + '...' : str;
+    }
+
+    async function login() {
+      const pwd = adminPasswordInput.value.trim();
+      if (!pwd) {
+        showToast('请输入密码', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '登录中...';
+
+      try {
+        const resp = await fetch('/api/admin/orders?limit=1', {
+          headers: { 'X-Admin-Password': pwd }
+        });
+
+        if (resp.status === 401) {
+          showToast('密码错误', 'error');
+          return;
+        }
+
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          showToast(data.error || '登录失败', 'error');
+          return;
+        }
+
+        currentPassword = pwd;
+        localStorage.setItem(LS_ADMIN_KEY, pwd);
+        loginSection.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        showToast('登录成功', 'success');
+        loadOrders();
+      } catch (err) {
+        showToast('网络错误', 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '登录';
+      }
+    }
+
+    async function loadOrders() {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '加载中...';
+
+      try {
+        const url = currentFilter
+          ? `/api/admin/orders?limit=100&status=${currentFilter}`
+          : '/api/admin/orders?limit=100';
+
+        const resp = await fetch(url, {
+          headers: { 'X-Admin-Password': currentPassword }
+        });
+
+        if (resp.status === 401) {
+          showToast('登录已过期', 'error');
+          logout();
+          return;
+        }
+
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          showToast(data.error || '加载失败', 'error');
+          return;
+        }
+
+        const data = await resp.json();
+        allOrders = data.orders || [];
+        renderOrders();
+        updateStats();
+      } catch (err) {
+        showToast('网络错误', 'error');
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '刷新';
+      }
+    }
+
+    function renderOrders() {
+      const filtered = currentFilter
+        ? allOrders.filter(o => o.status === currentFilter)
+        : allOrders;
+
+      if (filtered.length === 0) {
+        ordersTbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      ordersTbody.innerHTML = filtered.map(order => `
+        <tr data-id="${order.id}">
+          <td class="order-id" title="${order.id}">${truncate(order.id, 8)}</td>
+          <td class="food-name">${escapeHtml(order.foodName || '-')}</td>
+          <td><span class="order-code">${escapeHtml(order.orderCode || '-')}</span></td>
+          <td class="pay-method">${formatPayMethod(order.payMethod)}</td>
+          <td class="remark" title="${escapeHtml(order.remark || '')}">${escapeHtml(truncate(order.remark, 15))}</td>
+          <td><span class="status-badge ${order.status}">${order.status}</span></td>
+          <td class="time">${formatTime(order.createdAt)}</td>
+          <td class="action-btns">
+            ${order.status === 'pending' ? `
+              <button class="btn btn-success" onclick="confirmOrder('${order.id}')">确认</button>
+              <button class="btn btn-danger" onclick="rejectOrder('${order.id}')">拒绝</button>
+            ` : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateStats() {
+      let pending = 0, confirmed = 0, rejected = 0;
+      allOrders.forEach(o => {
+        if (o.status === 'pending') pending++;
+        else if (o.status === 'confirmed') confirmed++;
+        else if (o.status === 'rejected') rejected++;
+      });
+
+      statPending.textContent = pending;
+      statConfirmed.textContent = confirmed;
+      statRejected.textContent = rejected;
+      statTotal.textContent = allOrders.length;
+    }
+
+    async function confirmOrder(orderId) {
+      if (!confirm('确认此订单？确认后用户将看到生成的图片。')) return;
+
+      try {
+        const resp = await fetch('/api/admin/confirm', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': currentPassword
+          },
+          body: JSON.stringify({ orderId })
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+          showToast('订单已确认', 'success');
+          const order = allOrders.find(o => o.id === orderId);
+          if (order) {
+            order.status = 'confirmed';
+            order.confirmedAt = data.confirmedAt;
+          }
+          renderOrders();
+          updateStats();
+        } else {
+          showToast(data.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    async function rejectOrder(orderId) {
+      if (!confirm('拒绝此订单？')) return;
+
+      try {
+        const resp = await fetch('/api/admin/reject', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': currentPassword
+          },
+          body: JSON.stringify({ orderId })
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+          showToast('订单已拒绝', 'success');
+          const order = allOrders.find(o => o.id === orderId);
+          if (order) {
+            order.status = 'rejected';
+            order.rejectedAt = data.rejectedAt;
+          }
+          renderOrders();
+          updateStats();
+        } else {
+          showToast(data.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    function logout() {
+      currentPassword = '';
+      localStorage.removeItem(LS_ADMIN_KEY);
+      adminPanel.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+      adminPasswordInput.value = '';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.status || '';
+        renderOrders();
+      });
+    });
+
+    loginBtn.addEventListener('click', login);
+    adminPasswordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+    refreshBtn.addEventListener('click', loadOrders);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedPwd = localStorage.getItem(LS_ADMIN_KEY);
+      if (savedPwd) {
+        adminPasswordInput.value = savedPwd;
+        login();
+      }
+    });
+
+    window.confirmOrder = confirmOrder;
+    window.rejectOrder = rejectOrder;
+  </script>
+</body>
+</html>
