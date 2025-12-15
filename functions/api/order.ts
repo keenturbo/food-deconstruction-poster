@@ -95,17 +95,28 @@ async function rateLimitOrThrow(env: Env, key: string) {
   await env.ORDERS_KV.put(key, String(next), { expirationTtl: RATE_LIMIT_WINDOW_SECONDS });
 }
 
-async function sendBark(env: Env, title: string, body: string) {
+async function sendBark(env: Env, request: Request, title: string, body: string) {
   const barkKey = (env.BARK_KEY || "").trim();
   if (!barkKey) return;
 
-  const siteUrl = (env.SITE_URL || "").trim();
+  let adminUrl = "";
+  try {
+    const origin = new URL(request.url).origin;
+    adminUrl = `${origin}/admin.html`;
+  } catch {
+    adminUrl = (env.SITE_URL || "").trim();
+    if (adminUrl && !adminUrl.endsWith("/admin.html")) {
+      adminUrl = adminUrl.replace(/\/$/, "") + "/admin.html";
+    }
+  }
+
   const base = `https://api.day.app/${encodeURIComponent(barkKey)}`;
-  const url =
-    `${base}/${encodeURIComponent(title)}/${encodeURIComponent(body)}` +
-    `?group=${encodeURIComponent("Orders")}` +
-    `&sound=${encodeURIComponent("minuet")}` +
-    (siteUrl ? `&url=${encodeURIComponent(siteUrl)}` : "");
+  let url = `${base}/${encodeURIComponent(title)}/${encodeURIComponent(body)}`;
+  url += `?group=${encodeURIComponent("Orders")}`;
+  url += `&sound=${encodeURIComponent("minuet")}`;
+  if (adminUrl) {
+    url += `&url=${encodeURIComponent(adminUrl)}`;
+  }
 
   try {
     await fetch(url, { method: "GET" });
@@ -232,11 +243,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const pendingCount = index.length;
 
-    await sendBark(
-      env,
-      "新订单待确认",
-      `订单ID: ${id}\n美食: ${foodName}\n方式: ${payMethod}\n订单号: ${orderCode || "-"}\n备注: ${remark || "-"}\nIP: ${ip}\n待处理(近${ORDER_INDEX_MAX}): ${pendingCount}`,
-    );
+    const barkTitle = "💰 新订单待确认";
+    const barkBody = `美食: ${foodName}\n订单号: ${orderCode || "-"}\n方式: ${payMethod}\n备注: ${remark || "-"}`;
+
+    await sendBark(env, request, barkTitle, barkBody);
 
     return json({ success: true, orderId: id, status: "pending" });
   } catch (err: any) {
