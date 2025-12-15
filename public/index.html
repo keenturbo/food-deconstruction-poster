@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>解构式美食海报</title>
+  <link rel="stylesheet" href="/payment-modal.css" />
   <style>
     :root {
       --bg: #050507;
@@ -192,14 +193,43 @@
 
     .error-hint { color: #ff6b6b; font-size: 13px; margin-top: 4px; }
     .error-hint a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+    .price-tag {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0a0b0f;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-left: 8px;
+    }
+
+    .poll-status {
+      background: rgba(255, 179, 71, 0.12);
+      border: 1px solid rgba(255, 179, 71, 0.25);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .poll-status .order-id {
+      font-family: ui-monospace, monospace;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
   <div class="page">
     <header>
       <div>
-        <h1>解构式美食海报</h1>
-        <p class="lead">输入美食名称，自动拆解食材层次、质感与文化风格，生成纯黑背景的商业级分层海报。</p>
+        <h1>解构式美食海报 <span class="price-tag">¥5/张</span></h1>
+        <p class="lead">输入美食名称，自动拆解食材层次、质感与文化风格，生成纯黑背景的商业级分层海报。付款确认后显示图片。</p>
       </div>
     </header>
 
@@ -211,12 +241,13 @@
             <label for="food-input">美食名称</label>
             <input id="food-input" name="food_name" type="text" placeholder="例：红烧牛肉面 / Peking Duck" required />
           </div>
-          <button class="primary" type="submit" id="submit-btn">生成分层海报</button>
+          <button class="primary" type="submit" id="submit-btn">生成分层海报（¥5）</button>
           <div class="counter-row">
-            <div class="counter" id="limit-counter">今日免费剩余：3/3</div>
-            <button class="link-btn" type="button" id="add-key-btn">添加自己的 key</button>
+            <div class="counter" id="limit-counter"></div>
+            <button class="link-btn" type="button" id="add-key-btn">添加自己的 key（免费）</button>
           </div>
           <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待输入...</span></div>
+          <div id="poll-status-box" class="poll-status hidden"></div>
         </form>
       </div>
 
@@ -236,38 +267,22 @@
     </div>
   </div>
 
-  <div id="limit-modal" class="modal-backdrop hidden">
-    <div class="modal">
-      <h3>今日免费额度已用完</h3>
-      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持，或添加你的 Gemini Key 解锁不限次。</p>
-      <div class="modal-actions">
-        <a class="btn-secondary" href="https://github.com/keenturbo/food-deconstruction-poster" target="_blank" rel="noreferrer">GitHub 免费部署</a>
-        <a class="btn-secondary" href="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" target="_blank" rel="noreferrer">赞赏码</a>
-        <button class="btn-secondary" type="button" onclick="openKeyModal()">添加自己的 Key</button>
-      </div>
-      <div style="margin-top:12px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-        <img class="qr" src="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" alt="赞赏码" />
-      </div>
-      <div style="margin-top:14px; text-align:right;">
-        <button class="ghost-btn" type="button" onclick="closeLimitModal()">关闭</button>
-      </div>
-    </div>
-  </div>
-
   <div id="key-modal" class="modal-backdrop hidden">
     <div class="modal">
       <h3>添加你的 Gemini API Key</h3>
-      <p>填入你自己的付费层级 Google Gemini API Key，本地保存（LocalStorage），仅你可见，优先调用，不消耗本站免费额度。</p>
+      <p>填入你自己的付费层级 Google Gemini API Key，本地保存（LocalStorage），仅你可见，优先调用，无需付费直接生成。</p>
       <div style="margin-bottom:12px;">
         <input id="user-key-input" type="password" placeholder="粘贴你的 Gemini API Key" />
       </div>
       <div class="modal-actions">
         <button class="primary" type="button" onclick="saveUserKey()">保存</button>
         <button class="ghost-btn" type="button" onclick="closeKeyModal()">取消</button>
+        <button class="ghost-btn" type="button" onclick="clearUserKey()" style="color:#ff6b6b;">清除</button>
       </div>
     </div>
   </div>
 
+  <script src="/payment-modal.js"></script>
   <script>
     const form = document.getElementById('generate-form');
     const foodInput = document.getElementById('food-input');
@@ -279,13 +294,13 @@
     const retryBtn = document.getElementById('retry-btn');
     const downloadBtn = document.getElementById('download-btn');
     const limitCounter = document.getElementById('limit-counter');
-    const limitModal = document.getElementById('limit-modal');
     const keyModal = document.getElementById('key-modal');
     const addKeyBtn = document.getElementById('add-key-btn');
     const userKeyInput = document.getElementById('user-key-input');
+    const pollStatusBox = document.getElementById('poll-status-box');
 
-    const MAX_DAILY_LIMIT = 3;
     const LS_KEY = 'gemini_user_key';
+    const PRICE = '5';
 
     const sampleImages = [
       'https://food.snippet.pp.ua/IMG_5076.jpeg',
@@ -305,6 +320,11 @@
     const pick = sampleImages[Math.floor(Math.random() * sampleImages.length)];
     document.documentElement.style.setProperty('--sample', `url('${pick}')`);
 
+    let pendingImageData = null;
+    let currentOrderId = null;
+    let pollInterval = null;
+    let imageGenerating = false;
+
     function getUserKey() {
       return localStorage.getItem(LS_KEY) || '';
     }
@@ -320,6 +340,13 @@
       updateCounterUI();
     }
 
+    function clearUserKey() {
+      localStorage.removeItem(LS_KEY);
+      userKeyInput.value = '';
+      closeKeyModal();
+      updateCounterUI();
+    }
+
     function openKeyModal() {
       userKeyInput.value = getUserKey();
       keyModal.classList.remove('hidden');
@@ -329,78 +356,89 @@
       keyModal.classList.add('hidden');
     }
 
-    function getDailyUsage() {
-      const today = new Date().toISOString().split('T')[0];
-      const storedDate = localStorage.getItem('last_usage_date');
-      if (storedDate !== today) {
-        localStorage.setItem('last_usage_date', today);
-        localStorage.setItem('daily_count', '0');
-        return 0;
-      }
-      return parseInt(localStorage.getItem('daily_count') || '0', 10);
-    }
-
-    function incrementUsage() {
-      const count = getDailyUsage();
-      localStorage.setItem('daily_count', String(count + 1));
-      updateCounterUI();
-    }
-
     function updateCounterUI() {
-      const remaining = Math.max(0, MAX_DAILY_LIMIT - getDailyUsage());
       const hasUserKey = !!getUserKey();
-      limitCounter.textContent = hasUserKey
-        ? '已加载自定义 Key，免费额度不限'
-        : `今日免费剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+      if (hasUserKey) {
+        limitCounter.textContent = '已加载自定义 Key，无需付费';
+        submitBtn.textContent = '生成分层海报';
+      } else {
+        limitCounter.textContent = '付费模式：¥' + PRICE + '/张';
+        submitBtn.textContent = '生成分层海报（¥' + PRICE + '）';
+      }
     }
 
-    function showLimitModal() {
-      limitModal.classList.remove('hidden');
-    }
-
-    function closeLimitModal() {
-      limitModal.classList.add('hidden');
-    }
-
-    async function generatePoster(foodName) {
-      statusText.textContent = '正在解构美食...';
-      resultState.textContent = '生成中...';
-      submitBtn.disabled = true;
-      resultImg.classList.add('hidden');
-      resultActions.classList.add('hidden');
+    async function generateImageInBackground(foodName, userKey) {
+      imageGenerating = true;
+      pendingImageData = null;
       try {
-        const userKey = getUserKey();
         const resp = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ character_name: foodName, style: 'food_poster', customKey: userKey })
+          body: JSON.stringify({
+            character_name: foodName,
+            style: 'food_poster',
+            customKey: userKey || ''
+          })
         });
 
         if (!resp.ok) {
           let errorMsg = '生成失败：' + resp.status;
           try {
             const errData = await resp.json();
-            if (errData.error) {
-              errorMsg = errData.error;
-            }
+            if (errData.error) errorMsg = errData.error;
           } catch (e) {}
+          console.error('图片生成失败:', errorMsg);
+          imageGenerating = false;
+          return;
+        }
 
-          if (resp.status === 500 && !userKey) {
-            errorMsg = '服务暂不可用，请点击「添加自己的 key」填入你的 Gemini API Key 后重试';
-          }
+        const data = await resp.json();
+        if (data.image_url) {
+          pendingImageData = data.image_url;
+          console.log('图片已生成，等待订单确认后展示');
+        }
+      } catch (err) {
+        console.error('图片生成异常:', err);
+      }
+      imageGenerating = false;
+    }
+
+    async function generateWithUserKey(foodName) {
+      statusText.textContent = '正在解构美食...';
+      resultState.textContent = '生成中...';
+      submitBtn.disabled = true;
+      resultImg.classList.add('hidden');
+      resultActions.classList.add('hidden');
+
+      try {
+        const userKey = getUserKey();
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            character_name: foodName,
+            style: 'food_poster',
+            customKey: userKey
+          })
+        });
+
+        if (!resp.ok) {
+          let errorMsg = '生成失败：' + resp.status;
+          try {
+            const errData = await resp.json();
+            if (errData.error) errorMsg = errData.error;
+          } catch (e) {}
           throw new Error(errorMsg);
         }
 
         const data = await resp.json();
         if (!data.image_url) throw new Error('未返回图片地址');
+
         resultImg.src = data.image_url;
         resultImg.classList.remove('hidden');
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
         resultState.textContent = '生成完成';
-        if (!userKey) {
-          incrementUsage();
-        }
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
@@ -409,16 +447,129 @@
       }
     }
 
+    function startPolling(orderId) {
+      currentOrderId = orderId;
+      pollStatusBox.classList.remove('hidden');
+      updatePollStatus('pending');
+
+      if (pollInterval) clearInterval(pollInterval);
+
+      pollInterval = setInterval(async () => {
+        try {
+          const status = await PaymentModal.getOrderStatus({ orderId: orderId });
+          if (status.success) {
+            if (status.status === 'confirmed') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+              onOrderConfirmed();
+            } else if (status.status === 'rejected') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+              onOrderRejected();
+            } else {
+              updatePollStatus('pending');
+            }
+          }
+        } catch (err) {
+          console.error('轮询失败:', err);
+        }
+      }, 3000);
+    }
+
+    function updatePollStatus(status) {
+      if (status === 'pending') {
+        let msg = `<strong>订单已提交，等待确认...</strong><br>`;
+        msg += `订单ID: <span class="order-id">${currentOrderId || '-'}</span><br>`;
+        if (imageGenerating) {
+          msg += `图片状态: 生成中...`;
+        } else if (pendingImageData) {
+          msg += `图片状态: 已就绪，确认后立即显示`;
+        } else {
+          msg += `图片状态: 准备中...`;
+        }
+        pollStatusBox.innerHTML = msg;
+      }
+    }
+
+    function onOrderConfirmed() {
+      pollStatusBox.innerHTML = '<strong style="color:#4ade80;">✓ 订单已确认！</strong>';
+
+      if (pendingImageData) {
+        showImage(pendingImageData);
+      } else if (imageGenerating) {
+        statusText.textContent = '订单已确认，图片生成中...';
+        resultState.textContent = '生成中...';
+        const checkReady = setInterval(() => {
+          if (pendingImageData) {
+            clearInterval(checkReady);
+            showImage(pendingImageData);
+          } else if (!imageGenerating) {
+            clearInterval(checkReady);
+            statusText.textContent = '图片生成失败，请联系客服';
+            resultState.textContent = '生成失败';
+          }
+        }, 500);
+      } else {
+        statusText.textContent = '图片生成失败，请联系客服';
+        resultState.textContent = '生成失败';
+      }
+
+      setTimeout(() => {
+        pollStatusBox.classList.add('hidden');
+      }, 3000);
+    }
+
+    function onOrderRejected() {
+      pollStatusBox.innerHTML = '<strong style="color:#ff6b6b;">✗ 订单未通过</strong><br>如有疑问请联系客服';
+      statusText.textContent = '订单未确认';
+      resultState.textContent = '订单未确认';
+      pendingImageData = null;
+    }
+
+    function showImage(imageUrl) {
+      resultImg.src = imageUrl;
+      resultImg.classList.remove('hidden');
+      resultActions.classList.remove('hidden');
+      statusText.textContent = '生成完成';
+      resultState.textContent = '生成完成';
+    }
+
+    function handlePaidGenerate(foodName) {
+      statusText.textContent = '请完成付款...';
+      resultState.textContent = '等待付款';
+      submitBtn.disabled = true;
+      resultImg.classList.add('hidden');
+      resultActions.classList.add('hidden');
+      pollStatusBox.classList.add('hidden');
+
+      pendingImageData = null;
+      currentOrderId = null;
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+
+      generateImageInBackground(foodName, '');
+
+      PaymentModal.open({
+        foodName: foodName,
+        food_name: foodName,
+        character_name: foodName,
+        style: 'food_poster'
+      });
+    }
+
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const userKey = getUserKey();
-      if (!userKey && getDailyUsage() >= MAX_DAILY_LIMIT) {
-        showLimitModal();
-        return;
-      }
       const foodName = foodInput.value.trim();
       if (!foodName) return;
-      generatePoster(foodName);
+
+      const userKey = getUserKey();
+      if (userKey) {
+        generateWithUserKey(foodName);
+      } else {
+        handlePaidGenerate(foodName);
+      }
     });
 
     downloadBtn.addEventListener('click', () => {
@@ -431,13 +582,57 @@
 
     retryBtn.addEventListener('click', () => {
       const foodName = foodInput.value.trim() || '红烧牛肉面';
-      generatePoster(foodName);
+      const userKey = getUserKey();
+      if (userKey) {
+        generateWithUserKey(foodName);
+      } else {
+        handlePaidGenerate(foodName);
+      }
     });
 
     addKeyBtn.addEventListener('click', openKeyModal);
 
     window.addEventListener('DOMContentLoaded', () => {
       updateCounterUI();
+
+      PaymentModal.init({
+        price: PRICE,
+        currency: '¥',
+        wechatQR: 'https://pic.snippet.pp.ua/generated/IMG_4859.jpeg',
+        alipayQR: 'https://pic.snippet.pp.ua/generated/IMG_4859.jpeg',
+        enableHongbao: true,
+        apiGenerateOrder: '/api/generate-order',
+        apiSubmitOrder: '/api/order',
+        apiOrderStatus: '/api/order-status',
+        texts: {
+          title: '扫码付款',
+          subtitle: '付款后点击确认，管理员审核后显示图片',
+          orderHint: '付款时请备注此订单号',
+          confirmBtn: '已完成付款',
+          cancelBtn: '取消',
+          hongbaoSteps: '1) 打开支付宝搜索「口令红包」\n2) 发一个 ¥' + PRICE + ' 的口令红包\n3) 复制口令，粘贴到下方\n4) 点击「已完成付款」'
+        },
+        onSuccess: (info) => {
+          console.log('订单提交成功:', info);
+          statusText.textContent = '订单已提交，等待确认...';
+          resultState.textContent = '等待确认';
+          submitBtn.disabled = false;
+          startPolling(info.orderId);
+        },
+        onError: (msg) => {
+          console.error('订单提交失败:', msg);
+          statusText.textContent = '订单提交失败：' + msg;
+          resultState.textContent = '提交失败';
+          submitBtn.disabled = false;
+        },
+        onClose: () => {
+          if (!currentOrderId) {
+            submitBtn.disabled = false;
+            statusText.textContent = '已取消';
+            resultState.textContent = '未生成';
+          }
+        }
+      });
     });
   </script>
 </body>
