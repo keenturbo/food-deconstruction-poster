@@ -182,17 +182,6 @@
       text-align: center;
       text-decoration: none;
     }
-    .qr {
-      width: 140px;
-      height: 140px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: #0f0f12;
-      object-fit: contain;
-    }
-
-    .error-hint { color: #ff6b6b; font-size: 13px; margin-top: 4px; }
-    .error-hint a { color: var(--accent); text-decoration: underline; cursor: pointer; }
 
     .price-tag {
       display: inline-block;
@@ -222,6 +211,30 @@
       border-radius: 6px;
       font-size: 12px;
     }
+
+    .feedback-box {
+      background: rgba(255, 107, 107, 0.12);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .feedback-box .btn-feedback {
+      margin-top: 10px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 107, 107, 0.4);
+      background: rgba(255, 107, 107, 0.15);
+      color: #ff6b6b;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .feedback-box .btn-feedback:hover {
+      background: rgba(255, 107, 107, 0.25);
+    }
   </style>
 </head>
 <body>
@@ -248,6 +261,12 @@
           </div>
           <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待输入...</span></div>
           <div id="poll-status-box" class="poll-status hidden"></div>
+          <div id="feedback-box" class="feedback-box hidden">
+            <strong>图片生成失败</strong><br>
+            如您已付款，请点击下方按钮反馈，管理员将在24小时内联系您处理。
+            <br>
+            <button type="button" class="btn-feedback" id="feedback-btn">反馈问题</button>
+          </div>
         </form>
       </div>
 
@@ -282,6 +301,25 @@
     </div>
   </div>
 
+  <div id="feedback-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>反馈问题</h3>
+      <p>请填写您的联系方式，管理员将在24小时内联系您处理。</p>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--muted);">联系方式（微信/邮箱）</label>
+        <input id="feedback-contact" type="text" placeholder="微信号或邮箱" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--muted);">留言（可选）</label>
+        <input id="feedback-message" type="text" placeholder="补充说明" />
+      </div>
+      <div class="modal-actions">
+        <button class="primary" type="button" id="submit-feedback-btn">提交反馈</button>
+        <button class="ghost-btn" type="button" onclick="closeFeedbackModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/payment-modal.js"></script>
   <script>
     const form = document.getElementById('generate-form');
@@ -298,9 +336,17 @@
     const addKeyBtn = document.getElementById('add-key-btn');
     const userKeyInput = document.getElementById('user-key-input');
     const pollStatusBox = document.getElementById('poll-status-box');
+    const feedbackBox = document.getElementById('feedback-box');
+    const feedbackBtn = document.getElementById('feedback-btn');
+    const feedbackModal = document.getElementById('feedback-modal');
+    const feedbackContact = document.getElementById('feedback-contact');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const submitFeedbackBtn = document.getElementById('submit-feedback-btn');
 
     const LS_KEY = 'gemini_user_key';
-    const PRICE = '5';
+    let PRICE = '5';
+    let WECHAT_QR = '';
+    let ALIPAY_QR = '';
 
     const sampleImages = [
       'https://food.snippet.pp.ua/IMG_5076.jpeg',
@@ -322,8 +368,10 @@
 
     let pendingImageData = null;
     let currentOrderId = null;
+    let currentFoodName = '';
     let pollInterval = null;
     let imageGenerating = false;
+    let generationFailed = false;
 
     function getUserKey() {
       return localStorage.getItem(LS_KEY) || '';
@@ -356,8 +404,18 @@
       keyModal.classList.add('hidden');
     }
 
+    function openFeedbackModal() {
+      feedbackContact.value = '';
+      feedbackMessage.value = '';
+      feedbackModal.classList.remove('hidden');
+    }
+
+    function closeFeedbackModal() {
+      feedbackModal.classList.add('hidden');
+    }
+
     function updateCounterUI() {
-      const hasUserKey = !!getUserKey();
+       const hasUserKey = !!getUserKey();
       if (hasUserKey) {
         limitCounter.textContent = '已加载自定义 Key，无需付费';
         submitBtn.textContent = '生成分层海报';
@@ -369,7 +427,10 @@
 
     async function generateImageInBackground(foodName, userKey) {
       imageGenerating = true;
+      generationFailed = false;
       pendingImageData = null;
+      feedbackBox.classList.add('hidden');
+
       try {
         const resp = await fetch('/api/generate', {
           method: 'POST',
@@ -388,6 +449,7 @@
             if (errData.error) errorMsg = errData.error;
           } catch (e) {}
           console.error('图片生成失败:', errorMsg);
+          generationFailed = true;
           imageGenerating = false;
           return;
         }
@@ -396,9 +458,12 @@
         if (data.image_url) {
           pendingImageData = data.image_url;
           console.log('图片已生成，等待订单确认后展示');
+        } else {
+          generationFailed = true;
         }
       } catch (err) {
         console.error('图片生成异常:', err);
+        generationFailed = true;
       }
       imageGenerating = false;
     }
@@ -409,6 +474,7 @@
       submitBtn.disabled = true;
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
+      feedbackBox.classList.add('hidden');
 
       try {
         const userKey = getUserKey();
@@ -450,6 +516,7 @@
     function startPolling(orderId) {
       currentOrderId = orderId;
       pollStatusBox.classList.remove('hidden');
+      feedbackBox.classList.add('hidden');
       updatePollStatus('pending');
 
       if (pollInterval) clearInterval(pollInterval);
@@ -484,6 +551,8 @@
           msg += `图片状态: 生成中...`;
         } else if (pendingImageData) {
           msg += `图片状态: 已就绪，确认后立即显示`;
+        } else if (generationFailed) {
+          msg += `图片状态: 生成异常，确认后将尝试处理`;
         } else {
           msg += `图片状态: 准备中...`;
         }
@@ -496,6 +565,7 @@
 
       if (pendingImageData) {
         showImage(pendingImageData);
+        setTimeout(() => { pollStatusBox.classList.add('hidden'); }, 3000);
       } else if (imageGenerating) {
         statusText.textContent = '订单已确认，图片生成中...';
         resultState.textContent = '生成中...';
@@ -503,20 +573,24 @@
           if (pendingImageData) {
             clearInterval(checkReady);
             showImage(pendingImageData);
+            pollStatusBox.classList.add('hidden');
           } else if (!imageGenerating) {
             clearInterval(checkReady);
-            statusText.textContent = '图片生成失败，请联系客服';
-            resultState.textContent = '生成失败';
+            showGenerationFailed();
           }
         }, 500);
+      } else if (generationFailed) {
+        showGenerationFailed();
       } else {
-        statusText.textContent = '图片生成失败，请联系客服';
-        resultState.textContent = '生成失败';
+        showGenerationFailed();
       }
+    }
 
-      setTimeout(() => {
-        pollStatusBox.classList.add('hidden');
-      }, 3000);
+    function showGenerationFailed() {
+      statusText.textContent = '图片生成失败';
+      resultState.textContent = '生成失败';
+      pollStatusBox.classList.add('hidden');
+      feedbackBox.classList.remove('hidden');
     }
 
     function onOrderRejected() {
@@ -532,18 +606,23 @@
       resultActions.classList.remove('hidden');
       statusText.textContent = '生成完成';
       resultState.textContent = '生成完成';
+      feedbackBox.classList.add('hidden');
     }
 
     function handlePaidGenerate(foodName) {
+      currentFoodName = foodName;
       statusText.textContent = '请完成付款...';
       resultState.textContent = '等待付款';
       submitBtn.disabled = true;
       resultImg.classList.add('hidden');
       resultActions.classList.add('hidden');
       pollStatusBox.classList.add('hidden');
+      feedbackBox.classList.add('hidden');
 
       pendingImageData = null;
       currentOrderId = null;
+      generationFailed = false;
+
       if (pollInterval) {
         clearInterval(pollInterval);
         pollInterval = null;
@@ -557,6 +636,52 @@
         character_name: foodName,
         style: 'food_poster'
       });
+    }
+
+    async function submitFeedback() {
+      const contact = feedbackContact.value.trim();
+      const message = feedbackMessage.value.trim();
+
+      if (!contact) {
+        alert('请填写联系方式');
+        return;
+      }
+
+      if (!currentOrderId) {
+        alert('订单信息丢失，请刷新页面重试');
+        return;
+      }
+
+      submitFeedbackBtn.disabled = true;
+      submitFeedbackBtn.textContent = '提交中...';
+
+      try {
+        const resp = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: currentOrderId,
+            foodName: currentFoodName,
+            contact: contact,
+            message: message
+          })
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+          closeFeedbackModal();
+          feedbackBox.innerHTML = '<strong style="color:#4ade80;">✓ 反馈已提交</strong><br>管理员将在24小时内通过您留下的联系方式联系您处理。';
+          alert('反馈已提交，管理员将尽快联系您处理。');
+        } else {
+          alert(data.error || '提交失败，请稍后重试');
+        }
+      } catch (err) {
+        alert('网络错误，请稍后重试');
+      } finally {
+        submitFeedbackBtn.disabled = false;
+        submitFeedbackBtn.textContent = '提交反馈';
+      }
     }
 
     form.addEventListener('submit', (e) => {
@@ -591,15 +716,32 @@
     });
 
     addKeyBtn.addEventListener('click', openKeyModal);
+    feedbackBtn.addEventListener('click', openFeedbackModal);
+    submitFeedbackBtn.addEventListener('click', submitFeedback);
 
-    window.addEventListener('DOMContentLoaded', () => {
+    async function loadConfig() {
+      try {
+        const resp = await fetch('/api/config');
+        if (resp.ok) {
+          const cfg = await resp.json();
+          if (cfg.price) PRICE = cfg.price;
+          if (cfg.wechatQR) WECHAT_QR = cfg.wechatQR;
+          if (cfg.alipayQR) ALIPAY_QR = cfg.alipayQR;
+        }
+      } catch (e) {
+        console.error('加载配置失败:', e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadConfig();
       updateCounterUI();
 
       PaymentModal.init({
         price: PRICE,
         currency: '¥',
-        wechatQR: 'https://pic.icon.pp.ua/wechat-pay.jpeg',
-        alipayQR: 'https://pic.icon.pp.ua/alipay.jpeg',
+        wechatQR: WECHAT_QR || 'https://pic.snippet.pp.ua/generated/IMG_4859.jpeg',
+        alipayQR: ALIPAY_QR || 'https://pic.snippet.pp.ua/generated/IMG_4859.jpeg',
         enableHongbao: true,
         apiGenerateOrder: '/api/generate-order',
         apiSubmitOrder: '/api/order',
